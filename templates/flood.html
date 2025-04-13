@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Flood Prediction</title>
+</head>
+<body>
+    <h1>🌊 Flood Severity Prediction Form</h1>
+    <form action="/predict_flood" method="POST">
+        {% for field in [
+            'MonsoonIntensity', 'TopographyDrainage', 'RiverManagement', 'Deforestation', 'Urbanization',
+            'ClimateChange', 'DamsQuality', 'Siltation', 'AgriculturalPractices', 'Encroachments',
+            'IneffectiveDisasterPreparedness', 'DrainageSystems', 'CoastalVulnerability', 'Landslides',
+            'Watersheds', 'DeterioratingInfrastructure', 'PopulationScore', 'WetlandLoss',
+            'InadequatePlanning', 'PoliticalFactors'
+        ] %}
+            {{ field }}: <input type="number" step="any" name="{{ field }}" required><br><br>
+        {% endfor %}
+        <input type="submit" value="Predict Flood Severity">
+    </form>
+    <a href="/">🔙 Home</a>
+</body>
+</html>

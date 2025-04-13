@@ -10,27 +10,37 @@ import pandas as pd
 
 app = Flask(__name__)
 
-# 🔁 Load model, scaler, and feature names
+# 🌋 Load Earthquake model, scaler, and feature names
 with open("earthquake_classifier.pkl", "rb") as f:
-    model = pickle.load(f)
+    earthquake_model = pickle.load(f)
 
 with open("scaler.pkl", "rb") as f:
     scaler = pickle.load(f)
 
 with open("feature_names.pkl", "rb") as f:
-    feature_names = pickle.load(f)
+    eq_features = pickle.load(f)
 
-# Features that need to be scaled
 scale_cols = ['longitude', 'latitude', 'depth', 'significance', 'loc_depth', 'sig_depth']
+
+# 🌊 Load Flood CatBoost model
+with open("catboost_model.pkl", "rb") as f:
+    flood_model = pickle.load(f)
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
-@app.route('/predict', methods=['POST'])
-def predict():
+@app.route('/earthquake')
+def earthquake_form():
+    return render_template('earthquake.html')
+
+@app.route('/flood')
+def flood_form():
+    return render_template('flood.html')
+
+@app.route('/predict_earthquake', methods=['POST'])
+def predict_earthquake():
     try:
-        # 🌐 Collect data from form
         tsunami = int(request.form['tsunami'])
         significance = float(request.form['significance'])
         longitude = float(request.form['longitude'])
@@ -38,13 +48,11 @@ def predict():
         depth = float(request.form['depth'])
         year = int(request.form['year'])
 
-        # 🎯 Feature engineering
         year_bin = pd.cut([year], bins=[1990, 2000, 2010, 2020, 2030], labels=False)[0]
         loc_depth = latitude * depth
         sig_depth = significance * depth
 
-        # 🎁 Build input
-        user_input_dict = {
+        input_dict = {
             'tsunami': tsunami,
             'significance': significance,
             'longitude': longitude,
@@ -56,21 +64,41 @@ def predict():
             'sig_depth': sig_depth
         }
 
-        input_row = np.array([[user_input_dict[feat] for feat in feature_names]])
-
-        # 🧼 Scale specific features
-        scale_indices = [feature_names.index(col) for col in scale_cols]
+        input_row = np.array([[input_dict[feat] for feat in eq_features]])
+        scale_indices = [eq_features.index(col) for col in scale_cols]
         scaled_part = scaler.transform(input_row[:, scale_indices])
         input_row[0, scale_indices] = scaled_part
 
-        # ✅ Predict
-        prediction = model.predict(input_row)[0]
+        prediction = earthquake_model.predict(input_row)[0]
         result = "⚠️ Earthquake Likely!" if prediction == 1 else "✅ No Earthquake Expected."
 
         return render_template('result.html', prediction=result)
 
     except Exception as e:
-        return f"❌ Error: {str(e)}"
+        return f"Error in Earthquake Prediction: {e}"
+
+@app.route('/predict_flood', methods=['POST'])
+def predict_flood():
+    try:
+        # 🌊 Collect all 20 input features
+        features = [
+            'MonsoonIntensity', 'TopographyDrainage', 'RiverManagement', 'Deforestation', 'Urbanization',
+            'ClimateChange', 'DamsQuality', 'Siltation', 'AgriculturalPractices', 'Encroachments',
+            'IneffectiveDisasterPreparedness', 'DrainageSystems', 'CoastalVulnerability', 'Landslides',
+            'Watersheds', 'DeterioratingInfrastructure', 'PopulationScore', 'WetlandLoss',
+            'InadequatePlanning', 'PoliticalFactors'
+        ]
+
+        input_data = {feat: float(request.form[feat]) for feat in features}
+        input_df = pd.DataFrame([input_data])
+
+        prediction = flood_model.predict(input_df)[0]
+        result = f"🌊 Predicted Flood Severity: {round(prediction, 2)}"
+
+        return render_template('result.html', prediction=result)
+
+    except Exception as e:
+        return f"Error in Flood Prediction: {e}"
 
 if __name__ == '__main__':
     app.run(debug=True)

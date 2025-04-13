@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Earthquake Prediction</title>
+</head>
+<body>
+    <h1>🌋 Earthquake Prediction Form</h1>
+    <form action="/predict_earthquake" method="POST">
+        Tsunami (0 or 1): <input type="number" name="tsunami" required><br><br>
+        Significance: <input type="number" step="any" name="significance" required><br><br>
+        Longitude: <input type="number" step="any" name="longitude" required><br><br>
+        Latitude: <input type="number" step="any" name="latitude" required><br><br>
+        Depth (km): <input type="number" step="any" name="depth" required><br><br>
+        Year (1991-2024): <input type="number" name="year" required><br><br>
+        <input type="submit" value="Predict">
+    </form>
+    <a href="/">🔙 Home</a>
+</body>
+</html>
